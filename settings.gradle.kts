@@ -2,7 +2,6 @@ pluginManagement {
     repositories {
         gradlePluginPortal()
         mavenLocal()
-        maven { url = "https://gitlab.com/api/v4/groups/9962021/-/packages/maven" }
     }
 
     resolutionStrategy {
@@ -11,5 +10,4 @@ pluginManagement {
     }
 }
 
-rootProject.name = 'photon'
-include 'photon'
+rootProject.name = "photon"
