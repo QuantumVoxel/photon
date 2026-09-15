@@ -196,6 +196,9 @@ class PhotonPlugin : Plugin<Project> {
     private fun configureRun(project: Project, photon: PhotonExtension) {
         project.tasks.register<JavaExec>("runClient") {
             dependsOn(project.tasks.getByName("jar"))
+
+            group = "photon"
+
             outputs.upToDateWhen { false }
 
             val java = project.extensions.getByType<JavaPluginExtension>()
@@ -213,7 +216,7 @@ class PhotonPlugin : Plugin<Project> {
                     "-Dfabric.addMods=${project.tasks.named<Jar>("jar").get().archiveFile.get().asFile.absolutePath}",
                     "-XstartOnFirstThread",
                     "-Dquantum.gameDir=${
-                        project.file("run/client")
+                        project.file("run/client/main")
                     }",
                     "-Xmx6g"
                 )
@@ -223,16 +226,59 @@ class PhotonPlugin : Plugin<Project> {
                         project.tasks.named<Jar>("jar").get().archiveFile.get().asFile.absolutePath
                     }",
                     "-Dquantum.gameDir=${
-                        project.file("run/client")
+                        project.file("run/client/main")
                     }",
                     "-Xmx6g"
                 )
             }
 
-            workingDir = project.file("run/client")
+            workingDir = project.file("run/client/main")
+        }
+        project.tasks.register<JavaExec>("runClientAlt") {
+            dependsOn(project.tasks.getByName("jar"))
+
+            group = "photon"
+
+            outputs.upToDateWhen { false }
+
+            val java = project.extensions.getByType<JavaPluginExtension>()
+
+            val classpath = if (photon.splitClientSources.get()) {
+                java.sourceSets.getByName("client").runtimeClasspath
+            } else {
+                java.sourceSets.getByName("main").runtimeClasspath
+            }
+
+            classpath(classpath.files)
+            mainClass.set("net.fabricmc.loader.impl.launch.knot.KnotClient")
+            if (System.getProperty("os.name").lowercase().contains("mac")) {
+                jvmArgs(
+                    "-Dfabric.addMods=${project.tasks.named<Jar>("jar").get().archiveFile.get().asFile.absolutePath}",
+                    "-XstartOnFirstThread",
+                    "-Dquantum.gameDir=${
+                        project.file("run/client/alt")
+                    }",
+                    "-Xmx6g"
+                )
+            } else {
+                jvmArgs(
+                    "-Dfabric.addMods=${
+                        project.tasks.named<Jar>("jar").get().archiveFile.get().asFile.absolutePath
+                    }",
+                    "-Dquantum.gameDir=${
+                        project.file("run/client/alt")
+                    }",
+                    "-Xmx6g"
+                )
+            }
+
+            workingDir = project.file("run/client/alt")
         }
         project.tasks.register<JavaExec>("runServer") {
             dependsOn(project.tasks.getByName("jar"))
+
+            group = "photon"
+
             outputs.upToDateWhen { false }
 
             val java = project.extensions.getByType<JavaPluginExtension>()
@@ -257,9 +303,15 @@ class PhotonPlugin : Plugin<Project> {
 
     private fun configureRunDirectory(project: Project) {
         project.layout.projectDirectory
-            .dir("run/client")
+            .dir("run/client/main")
             .asFile
             .mkdirs()
+
+        project.layout.projectDirectory
+            .dir("run/client/alt")
+            .asFile
+            .mkdirs()
+
         project.layout.projectDirectory
             .dir("run/server")
             .asFile
